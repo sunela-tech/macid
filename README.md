@@ -70,7 +70,7 @@ The app uses Clerk's prebuilt `AuthView` (sheet) and `UserButton` (toolbar). Pro
 
 Requirements on the Clerk side: the **Native API** must be on (Dashboard → Native applications; the sheet tells you if it's off), and for a production instance add `https://sunela-tech.github.io` to the instance's allowed origins (the checkout page runs under that origin, see `AppConfig.checkoutOrigin`).
 
-The browser version (`web/pricing/index.html`, published to https://sunela-tech.github.io/macid/pricing/ by `.github/workflows/pages.yml` once Pages is on: **Settings → Pages → Source: GitHub Actions**) is kept as a fallback behind *Open in Browser*.
+The browser version (`web/pricing/index.html`, live at https://sunela-tech.github.io/macid/web/pricing/ through `.github/workflows/static.yml`, which publishes the repo to GitHub Pages on every push) is kept as a fallback behind *Open in Browser*. The 3D ad is published the same way at https://sunela-tech.github.io/macid/marketing/mac-id-ad.html.
 
 ## 2. Build the app, .dmg and .pkg
 

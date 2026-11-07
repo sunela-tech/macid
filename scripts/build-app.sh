@@ -19,7 +19,7 @@ BUILD_NUMBER="${BUILD_NUMBER:-1}"
 SIGN_IDENTITY="${SIGN_IDENTITY:--}"
 DEVELOPMENT_TEAM="${DEVELOPMENT_TEAM:-}"
 # Publishable keys are public by design; this is the "MacID" Clerk app (development instance).
-MACID_PRICING_URL="${MACID_PRICING_URL:-https://sunela-tech.github.io/macid/pricing/}"
+MACID_PRICING_URL="${MACID_PRICING_URL:-https://sunela-tech.github.io/macid/web/pricing/}"
 CLERK_PUBLISHABLE_KEY="${CLERK_PUBLISHABLE_KEY:-pk_test_a2Vlbi1ncmlmZm9uLTE3ODkuY2xlcmsuYWNjb3VudHMuZGV2JA}"
 
 if [[ -z "$CLERK_PUBLISHABLE_KEY" ]]; then

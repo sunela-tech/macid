@@ -48,7 +48,7 @@ enum AppConfig {
 
   /// Browser fallback for the in-app checkout: web/pricing/index.html, published by the Pages workflow.
   static var pricingURL: URL {
-    let fallback = "https://sunela-tech.github.io/macid/pricing/"
+    let fallback = "https://sunela-tech.github.io/macid/web/pricing/"
     let value = (Bundle.main.object(forInfoDictionaryKey: "MacIDPricingURL") as? String) ?? fallback
     return URL(string: value) ?? URL(string: fallback)!
   }
