@@ -34,26 +34,33 @@ clerk/        billing.json for `clerk config patch`
 marketing/    3D ad (HTML + 1080p MP4), app icon PNG
 ```
 
-## 1. Set up Clerk
+## 1. Clerk
 
-Following Clerk's Swift and Billing skills (github.com/clerk/skills):
+Already set up in the **MacID** Clerk application (`app_3LnB9yZBw6rN1PYEFU3kGcLULPM`, development instance):
 
-1. Create an application at dashboard.clerk.com, or let the Clerk CLI do it: `npx -y clerk@latest init` from this folder. Note the **publishable key** (`pk_test_…`).
-2. Enable Billing: Dashboard → Billing → Settings, or `npx -y clerk@latest enable billing --for user`. Development instances use Clerk's test gateway; production needs a connected Stripe account.
-3. Create the plan in the **User Plans** tab: slug `pro`, $4.00/month, recurring. Add the feature `unlimited_unlocks` to it. To script it: `npx -y clerk@latest config patch --file clerk/billing.json --dry-run`, then without `--dry-run`, then attach the feature to the plan in Dashboard → Billing → Plans → Pro → Features.
-4. If Organizations are on, set Membership to **optional** so personal (B2C) subscriptions work.
-5. Register the native app with bundle ID `app.macid.MacID` (the Clerk CLI `init` does this; otherwise use the Native applications page in the Clerk Dashboard). Sign in with Apple needs an Apple Developer provisioning profile, so it's left out of the entitlements; add it with `npx -y clerk@latest init --sign-in-with-apple` if you want it.
-6. Check the setup: `npx -y clerk@latest doctor`.
+| What | Value |
+| --- | --- |
+| Publishable key | `pk_test_a2Vlbi1ncmlmZm9uLTE3ODkuY2xlcmsuYWNjb3VudHMuZGV2JA` (public by design; the build uses it by default) |
+| Billing | On for users. Development instances use Clerk's test payment gateway, so no real charges. |
+| Plans | `free_user` (Free, created by Clerk) and `pro` (Pro, $4.00/month, recurring, paid by the user) |
+| Feature | `unlimited_unlocks`, attached to `pro` and included in the session token |
+| SSO redirect allowlist | `app.macid.MacID://callback` (Google / Microsoft / Apple sign-in from the Mac app) |
+
+`clerk/billing.json` holds the same billing config, so it can be re-applied with `npx -y clerk@latest config patch --file clerk/billing.json --dry-run` (then without `--dry-run`), for example to a production instance.
+
+Before real customers can pay:
+
+1. Create a production instance and connect Stripe (Dashboard → Billing → Settings). Apply `clerk/billing.json` and allowlist `app.macid.MacID://callback` there too.
+2. Build with the production key: `CLERK_PUBLISHABLE_KEY=pk_live_… ./scripts/build-app.sh`, and put the same key in `web/pricing/index.html`.
+3. Sign in with Apple needs an Apple Developer provisioning profile, so it's left out of the entitlements. Add it with `npx -y clerk@latest init --sign-in-with-apple` if you want it.
 
 The app uses Clerk's prebuilt `AuthView` (sheet) and `UserButton` (toolbar). Pro is checked with `Clerk.shared.has(feature: "unlimited_unlocks") || Clerk.shared.has(plan: "pro")` after a `getToken(skipCache: true)` refresh, the native equivalent of `has()` in Clerk's web SDKs.
 
 ### Checkout page
 
-Clerk's Swift SDK reads plans and subscriptions but has no native checkout, so **Upgrade to Pro** opens `web/pricing/index.html`, which mounts Clerk's `PricingTable` (checkout drawer included).
+Clerk's Swift SDK reads plans and subscriptions but has no native checkout, so **Upgrade to Pro** opens `web/pricing/index.html`, which mounts Clerk's `PricingTable` (checkout drawer included). It already has the publishable key.
 
-1. Put your publishable key in its `clerk-publishable-key` meta tag.
-2. Host it anywhere (Vercel, Netlify, GitHub Pages). Production Clerk instances need that domain added in Clerk.
-3. Build the app with `MACID_PRICING_URL=https://your-site/pricing`.
+It's published to **https://sunela-tech.github.io/macid/pricing/** by `.github/workflows/pages.yml`. One-time setup: repo **Settings → Pages → Source: GitHub Actions**, then **Actions → Pricing page → Run workflow**. To host it elsewhere, build the app with `MACID_PRICING_URL=https://your-site/pricing/`.
 
 After paying, the user switches back to Mac ID (or clicks *Return to Mac ID*) and the app refreshes the plan.
 
@@ -62,7 +69,7 @@ After paying, the user switches back to Mac ID (or clicks *Return to Mac ID*) an
 Needs a Mac with **Xcode 26+** (Clerk's SDK requires Swift 6.2) and Homebrew.
 
 ```bash
-CLERK_PUBLISHABLE_KEY=pk_test_xxx MACID_PRICING_URL=https://your-site/pricing ./scripts/build-app.sh
+./scripts/build-app.sh
 ```
 
 ```bash
@@ -93,11 +100,11 @@ SIGN_IDENTITY="Developer ID Application: Your Name (TEAMID)" NOTARY_PROFILE=maci
 INSTALLER_IDENTITY="Developer ID Installer: Your Name (TEAMID)" NOTARY_PROFILE=macid-notary ./scripts/make-pkg.sh
 ```
 
-To work in Xcode instead: `brew install xcodegen && xcodegen generate && open MacID.xcodeproj`, then set `CLERK_PUBLISHABLE_KEY` in the scheme's environment variables.
+To work in Xcode instead: `brew install xcodegen && xcodegen generate && open MacID.xcodeproj`, and run the MacID scheme.
 
 ### GitHub Actions
 
-`.github/workflows/release.yml` builds the .dmg and .pkg on a macOS runner (manually, or on `v*` tags, attaching them to a release). Set the repository variable `CLERK_PUBLISHABLE_KEY`; add the signing secrets listed at the top of the file for signed, notarized builds.
+`.github/workflows/release.yml` builds the .dmg and .pkg on a macOS runner on every push to `main`, on pull requests, manually, and on `v*` tags (attaching them to a release). Download them from the run's **Artifacts**. To use a different Clerk app, set the repository variable `CLERK_PUBLISHABLE_KEY`. Add the signing secrets listed at the top of the file for signed, notarized builds.
 
 ## 3. Use it
 

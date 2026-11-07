@@ -48,7 +48,7 @@ enum AppConfig {
 
   /// Web page that renders Clerk's PricingTable and checkout (see web/pricing/index.html).
   static var pricingURL: URL {
-    let fallback = "https://macid.app/pricing"
+    let fallback = "https://sunela-tech.github.io/macid/pricing/"
     let value = (Bundle.main.object(forInfoDictionaryKey: "MacIDPricingURL") as? String) ?? fallback
     return URL(string: value) ?? URL(string: fallback)!
   }

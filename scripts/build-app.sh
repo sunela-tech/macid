@@ -1,9 +1,10 @@
 #!/usr/bin/env bash
 # Builds "build/Mac ID.app" (universal: Apple silicon + Intel). Run on a Mac with Xcode 26+.
 #
-#   CLERK_PUBLISHABLE_KEY=pk_test_... ./scripts/build-app.sh
+#   ./scripts/build-app.sh
 #
 # Optional environment:
+#   CLERK_PUBLISHABLE_KEY  defaults to the MacID Clerk app (development instance)
 #   MACID_PRICING_URL   page hosting web/pricing/index.html (Clerk PricingTable)
 #   SIGN_IDENTITY       "Developer ID Application: Your Name (TEAMID)"; default "-" (ad-hoc, this Mac only)
 #   DEVELOPMENT_TEAM    your Apple team ID, when signing with Developer ID
@@ -17,8 +18,9 @@ VERSION="${VERSION:-1.0.0}"
 BUILD_NUMBER="${BUILD_NUMBER:-1}"
 SIGN_IDENTITY="${SIGN_IDENTITY:--}"
 DEVELOPMENT_TEAM="${DEVELOPMENT_TEAM:-}"
-MACID_PRICING_URL="${MACID_PRICING_URL:-https://macid.app/pricing}"
-CLERK_PUBLISHABLE_KEY="${CLERK_PUBLISHABLE_KEY:-}"
+# Publishable keys are public by design; this is the "MacID" Clerk app (development instance).
+MACID_PRICING_URL="${MACID_PRICING_URL:-https://sunela-tech.github.io/macid/pricing/}"
+CLERK_PUBLISHABLE_KEY="${CLERK_PUBLISHABLE_KEY:-pk_test_a2Vlbi1ncmlmZm9uLTE3ODkuY2xlcmsuYWNjb3VudHMuZGV2JA}"
 
 if [[ -z "$CLERK_PUBLISHABLE_KEY" ]]; then
   echo "warning: CLERK_PUBLISHABLE_KEY is not set. Sign-in and Pro checks stay off until you rebuild with it." >&2

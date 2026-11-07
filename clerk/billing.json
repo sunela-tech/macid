@@ -1,21 +1,25 @@
 {
   "billing": {
-    "plans": [
-      {
-        "slug": "pro",
+    "user_enabled": true,
+    "features": {
+      "unlimited_unlocks": {
+        "name": "Unlimited face unlocks",
+        "description": "No daily limit on Mac ID face unlocks",
+        "include_in_jwt": true,
+        "publicly_visible": true
+      }
+    },
+    "plans": {
+      "pro": {
         "name": "Pro",
         "description": "Unlimited Mac ID face unlocks",
         "amount": 400,
         "currency": "usd",
         "payer_type": "user",
-        "is_recurring": true
+        "is_recurring": true,
+        "publicly_visible": true,
+        "features": ["unlimited_unlocks"]
       }
-    ],
-    "features": [
-      {
-        "slug": "unlimited_unlocks",
-        "name": "Unlimited face unlocks"
-      }
-    ]
+    }
   }
 }
