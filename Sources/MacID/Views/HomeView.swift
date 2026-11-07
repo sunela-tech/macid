@@ -105,7 +105,7 @@ struct HomeView: View {
       }
       if !model.unlimited {
         Button {
-          model.plan.openCheckout()
+          model.plan.presentCheckout(.plans)
         } label: {
           Label("Get Pro · \(AppConfig.proPriceLabel)", systemImage: "infinity")
         }

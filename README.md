@@ -5,7 +5,7 @@ Face unlock for the Mac you already own. SwiftUI, SF Symbols, Clerk (auth + Bill
 - **Setup:** one photo from the Mac's camera. **Meshy 7.1** (`ai_model: "meshy-7.1"`) builds your whole textured head. A second photo goes to **Meshy 6 Lite** (`meshy-6-lite`, mesh only), and that scan has to match the 7.1 head.
 - **Unlock:** the camera acts like a depth sensor. Vision maps 76 face landmarks, a dot pattern is projected over the face in the UI, and an on-device match (face embedding + landmark geometry + blink/head-turn check) unlocks in about a second. Optionally each unlock also runs a Meshy 6 Lite scan against your 7.1 head (Settings → Unlock scan).
 - **Free:** 30 face unlocks a day. When they run out, Mac ID asks for **Touch ID or your password** (system sheet).
-- **Pro, $4/month:** unlimited face unlocks, sold through **Clerk Billing**.
+- **Pro, $4/month:** unlimited face unlocks, bought inside the app through **Clerk Billing**.
 
 ## What Mac ID can and can't do
 
@@ -24,10 +24,10 @@ Sources/MacID/
   Face/       Vision analysis, matcher, liveness, depth-dot overlay
   Meshy/      Meshy client, 7.1 head + 6 Lite scan pipeline, OBJ shape compare, SceneKit head viewer
   Unlock/     30/day quota, Touch ID/password, full-screen lock windows
-  Billing/    Clerk Billing plan checks (has(feature:) / has(plan:))
+  Billing/    Clerk Billing: plan checks (has(feature:) / has(plan:)), billing data, in-app checkout sheet
   Views/      SwiftUI screens (SF Symbols throughout)
 Support/      Info.plist (camera usage text, Clerk callback URL scheme), entitlements (sandbox, camera, network)
-Resources/    Asset catalog with the app icon (scripts/make-icon.py draws it)
+Resources/    App icon asset catalog (scripts/make-icon.py draws it), checkout.html for in-app payments
 scripts/      build-app.sh, make-dmg.sh, make-pkg.sh, make-icon.py
 web/pricing/  Clerk PricingTable page for the $4/month checkout
 clerk/        billing.json for `clerk config patch`
@@ -56,13 +56,21 @@ Before real customers can pay:
 
 The app uses Clerk's prebuilt `AuthView` (sheet) and `UserButton` (toolbar). Pro is checked with `Clerk.shared.has(feature: "unlimited_unlocks") || Clerk.shared.has(plan: "pro")` after a `getToken(skipCache: true)` refresh, the native equivalent of `has()` in Clerk's web SDKs.
 
-### Checkout page
+### Payments inside the app
 
-Clerk's Swift SDK reads plans and subscriptions but has no native checkout, so **Upgrade to Pro** opens `web/pricing/index.html`, which mounts Clerk's `PricingTable` (checkout drawer included). It already has the publishable key.
+**Plan & Billing** (sidebar) is a native SwiftUI screen built on ClerkKit's Billing APIs: the plans from Clerk with live prices, your subscription (status, period, next payment), saved cards, and payment history and statements.
 
-It's published to **https://sunela-tech.github.io/macid/pricing/** by `.github/workflows/pages.yml`. One-time setup: repo **Settings → Pages → Source: GitHub Actions**, then **Actions → Pricing page → Run workflow**. To host it elsewhere, build the app with `MACID_PRICING_URL=https://your-site/pricing/`.
+**Subscribe**, **Change or Cancel**, **Add Card / Manage** and **Billing Details** open a sheet inside Mac ID:
 
-After paying, the user switches back to Mac ID (or clicks *Return to Mac ID*) and the app refreshes the plan.
+- It runs Clerk's own `PricingTable` (checkout drawer) or the account billing page in a web view (`Resources/checkout.html`, `Billing/CheckoutWebView.swift`). Stripe's card form has no native macOS SDK, so the card form is Stripe's web form either way.
+- The sheet uses the app's existing Clerk session: ClerkKit's device token (`@_spi(FrameworkIntegration) Clerk.shared.deviceToken`, the hook Clerk provides for exactly this) is attached to each request, the same way Clerk's Expo SDK runs clerk-js. Nobody signs in twice.
+- Card details go from Stripe's form straight to Stripe. Nothing is stored on disk (non-persistent web data store).
+- After a purchase the sheet closes, the session token is refreshed, and Pro unlocks right away.
+- Test mode (`pk_test_…`): pay with card `4242 4242 4242 4242`, any future expiry, any CVC.
+
+Requirements on the Clerk side: the **Native API** must be on (Dashboard → Native applications; the sheet tells you if it's off), and for a production instance add `https://sunela-tech.github.io` to the instance's allowed origins (the checkout page runs under that origin, see `AppConfig.checkoutOrigin`).
+
+The browser version (`web/pricing/index.html`, published to https://sunela-tech.github.io/macid/pricing/ by `.github/workflows/pages.yml` once Pages is on: **Settings → Pages → Source: GitHub Actions**) is kept as a fallback behind *Open in Browser*.
 
 ## 2. Build the app, .dmg and .pkg
 

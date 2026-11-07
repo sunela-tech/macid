@@ -12,7 +12,7 @@ options:
 packages:
   Clerk:
     url: https://github.com/clerk/clerk-ios
-    from: 1.7.0
+    from: 1.7.1
 
 settings:
   base:

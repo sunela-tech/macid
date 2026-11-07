@@ -82,7 +82,11 @@ struct MenuBarContent: View {
       NSApp.activate()
     }
     if !model.unlimited {
-      Button("Get Pro (\(AppConfig.proPriceLabel))…") { model.plan.openCheckout() }
+      Button("Get Pro (\(AppConfig.proPriceLabel))…") {
+        openWindow(id: "main")
+        NSApp.activate()
+        model.plan.presentCheckout(.plans)
+      }
     }
     Divider()
     Button("Quit Mac ID") { NSApp.terminate(nil) }

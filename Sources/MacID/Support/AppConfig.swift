@@ -46,12 +46,16 @@ enum AppConfig {
     return key.hasPrefix("pk_test_") || key.hasPrefix("pk_live_")
   }
 
-  /// Web page that renders Clerk's PricingTable and checkout (see web/pricing/index.html).
+  /// Browser fallback for the in-app checkout: web/pricing/index.html, published by the Pages workflow.
   static var pricingURL: URL {
     let fallback = "https://sunela-tech.github.io/macid/pricing/"
     let value = (Bundle.main.object(forInfoDictionaryKey: "MacIDPricingURL") as? String) ?? fallback
     return URL(string: value) ?? URL(string: fallback)!
   }
+
+  /// Origin the in-app checkout page runs under (Resources/checkout.html is loaded with this
+  /// base URL). Add it to the production Clerk instance's allowed origins before going live.
+  static let checkoutOrigin = URL(string: "https://sunela-tech.github.io/macid/")!
 
   // MARK: Storage
 

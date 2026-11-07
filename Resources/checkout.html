@@ -1,0 +1,107 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Mac ID Billing</title>
+  <style>
+    :root { color-scheme: dark; --ink: #12141b; --silver: #e4e7ee; --dim: #8d95a8; --ir: #ff4d6d; }
+    html, body { margin: 0; background: var(--ink); color: var(--silver);
+      font: 14px/1.45 -apple-system, BlinkMacSystemFont, "Helvetica Neue", Arial, sans-serif; }
+    main { padding: 18px 22px 28px; }
+    #status { color: var(--dim); font-size: 13px; padding: 56px 12px; text-align: center; }
+    #status.err { color: var(--ir); }
+  </style>
+</head>
+<body>
+  <main>
+    <div id="status">Loading secure checkout…</div>
+    <div id="mount"></div>
+  </main>
+  <script>
+    // Runs Clerk's billing UI inside Mac ID. `window.__MACID__` is injected by the app:
+    // { publishableKey, deviceToken, mode: "plans" | "account" }.
+    // The app's Clerk device token is attached to every Frontend API request, the same way
+    // Clerk's own Expo and Chrome extension SDKs do it, so this page is the user's own
+    // signed-in session and nobody has to sign in twice.
+    (async () => {
+      const cfg = window.__MACID__ || {};
+      const status = document.getElementById('status');
+      const post = (msg) => { try { window.webkit.messageHandlers.macid.postMessage(msg); } catch (_) {} };
+      const fail = (message) => {
+        status.style.display = 'block';
+        status.textContent = message;
+        status.className = 'err';
+        post({ type: 'error', message });
+      };
+
+      try {
+        if (!/^pk_(test|live)_/.test(cfg.publishableKey || '')) return fail('Mac ID was built without a Clerk publishable key.');
+        if (!cfg.deviceToken) return fail('Sign in to Mac ID first.');
+
+        const frontendApi = atob(cfg.publishableKey.split('_')[2]).replace(/\$$/, '');
+        await new Promise((resolve, reject) => {
+          const s = document.createElement('script');
+          s.src = `https://${frontendApi}/npm/@clerk/clerk-js@6/dist/clerk.browser.js`;
+          s.async = true;
+          s.crossOrigin = 'anonymous';
+          s.setAttribute('data-clerk-publishable-key', cfg.publishableKey);
+          s.onload = resolve;
+          s.onerror = () => reject(new Error('Could not reach Clerk. Check your internet connection.'));
+          document.head.appendChild(s);
+        });
+
+        const clerk = window.Clerk;
+        let token = cfg.deviceToken;
+        clerk.__internal_onBeforeRequest(async (request) => {
+          request.credentials = 'omit';
+          request.url?.searchParams.append('_is_native', '1');
+          request.headers.set('authorization', token || '');
+        });
+        clerk.__internal_onAfterResponse(async (_request, response) => {
+          const rotated = response?.headers?.get?.('authorization');
+          if (rotated && rotated !== token) {
+            token = rotated;
+            post({ type: 'deviceToken', value: rotated });
+          }
+          if (response?.payload?.errors?.[0]?.code === 'native_api_disabled') {
+            fail('Payments inside Mac ID need the Native API. Turn it on in the Clerk Dashboard → Native applications.');
+          }
+        });
+
+        await clerk.load({
+          standardBrowser: false,
+          appearance: {
+            variables: {
+              colorPrimary: '#ffb35c',
+              colorBackground: '#191c25',
+              colorText: '#e4e7ee',
+              colorInputBackground: '#11141b',
+              colorInputText: '#e4e7ee',
+              borderRadius: '10px',
+              fontFamily: '-apple-system, BlinkMacSystemFont, "Helvetica Neue", Arial, sans-serif',
+            },
+          },
+        });
+
+        if (!clerk.isSignedIn) return fail('Your Mac ID session has expired. Sign in again, then retry.');
+
+        status.style.display = 'none';
+        const mount = document.getElementById('mount');
+        if (cfg.mode === 'account') {
+          // Clerk's account billing page: payment methods, statements, cancel or change plan.
+          location.hash = '/billing';
+          clerk.mountUserProfile(mount, { routing: 'hash' });
+        } else {
+          // Plans with Clerk's checkout drawer (Stripe card form inside).
+          clerk.mountPricingTable(mount, { newSubscriptionRedirectUrl: 'macid-checkout://subscribed' });
+        }
+        clerk.addListener(() => post({ type: 'changed' }));
+        post({ type: 'ready' });
+      } catch (error) {
+        fail((error && error.message) || String(error));
+      }
+    })();
+  </script>
+</body>
+</html>
