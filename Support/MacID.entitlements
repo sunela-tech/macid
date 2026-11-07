@@ -1,0 +1,15 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+<plist version="1.0">
+<dict>
+	<!-- Sandboxed, like Clerk's macOS example. -->
+	<key>com.apple.security.app-sandbox</key>
+	<true/>
+	<!-- Clerk, Clerk Billing and the Meshy API. -->
+	<key>com.apple.security.network.client</key>
+	<true/>
+	<!-- Face scans. Also required under the hardened runtime. -->
+	<key>com.apple.security.device.camera</key>
+	<true/>
+</dict>
+</plist>

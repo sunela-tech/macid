@@ -1,0 +1,21 @@
+{
+  "billing": {
+    "plans": [
+      {
+        "slug": "pro",
+        "name": "Pro",
+        "description": "Unlimited Mac ID face unlocks",
+        "amount": 400,
+        "currency": "usd",
+        "payer_type": "user",
+        "is_recurring": true
+      }
+    ],
+    "features": [
+      {
+        "slug": "unlimited_unlocks",
+        "name": "Unlimited face unlocks"
+      }
+    ]
+  }
+}

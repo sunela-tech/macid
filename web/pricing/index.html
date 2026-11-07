@@ -1,0 +1,124 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Mac ID Pro</title>
+  <!-- Same Clerk application as the Mac app. Replace with your publishable key. -->
+  <meta name="clerk-publishable-key" content="pk_test_REPLACE_WITH_YOUR_KEY">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Instrument+Sans:wght@400;500;600;700&family=JetBrains+Mono:wght@500&display=swap">
+  <style>
+    :root {
+      --ink: #0a0c11; --panel: #121620; --line: #232a3a;
+      --silver: #e4e7ee; --dim: #8d95a8;
+      --ir: #ff4d6d; --ok: #3fd9a6; --amber: #ffb35c;
+      --display: "Instrument Sans", "Helvetica Neue", Arial, sans-serif;
+      --mono: "JetBrains Mono", ui-monospace, Menlo, monospace;
+      color-scheme: dark;
+    }
+    * { box-sizing: border-box; }
+    html, body { margin: 0; background: var(--ink); color: var(--silver); font-family: var(--display); }
+    main { max-width: 960px; margin: 0 auto; padding: 32px max(16px, env(safe-area-inset-left)) 64px; display: grid; gap: 28px; }
+    header { display: flex; align-items: center; justify-content: space-between; gap: 16px; }
+    .brand { display: flex; align-items: center; gap: 12px; font: 700 22px/1 var(--display); letter-spacing: -0.03em; }
+    .brand .icon { width: 40px; height: 40px; border-radius: 10px; display: grid; place-items: center;
+      background: radial-gradient(120% 120% at 30% 20%, #343b52, #161a26 62%, #0d1018); box-shadow: inset 0 0 0 1px rgba(255,255,255,.14); }
+    .brand svg { width: 70%; height: 70%; }
+    h1 { margin: 0; font: 600 clamp(32px, 6vw, 54px)/1.02 var(--display); letter-spacing: -0.035em; text-wrap: balance; }
+    .lede { margin: 10px 0 0; color: var(--dim); font-size: 17px; line-height: 1.5; max-width: 60ch; }
+    .k { font: 500 11px/1 var(--mono); letter-spacing: .1em; text-transform: uppercase; color: var(--amber); }
+    #pricing { min-height: 240px; }
+    .note { color: var(--dim); font-size: 14px; line-height: 1.55; }
+    .actions { display: flex; flex-wrap: wrap; gap: 12px; align-items: center; }
+    .btn { appearance: none; border: 0; border-radius: 99px; padding: 12px 18px; font: 600 15px/1 var(--display); cursor: pointer; text-decoration: none; }
+    .btn.primary { background: var(--silver); color: #0b0d12; }
+    .btn.ghost { background: var(--panel); color: var(--silver); border: 1px solid var(--line); }
+    .btn:focus-visible { outline: 2px solid var(--ok); outline-offset: 2px; }
+    .status { font: 500 13px/1.4 var(--mono); color: var(--dim); }
+    .status.ok { color: var(--ok); }
+    .status.err { color: var(--ir); }
+  </style>
+</head>
+<body>
+  <main>
+    <header>
+      <div class="brand">
+        <div class="icon" aria-hidden="true">
+          <svg viewBox="0 0 100 100" fill="none" stroke="#fff" stroke-width="6" stroke-linecap="round" stroke-linejoin="round">
+            <path d="M18 36V28Q18 18 28 18H36M64 18H72Q82 18 82 28V36M82 64V72Q82 82 72 82H64M36 82H28Q18 82 18 72V64"/>
+            <path d="M38 40V47M62 40V47M51 41V57H46"/><path d="M37 64Q50 74 63 64"/>
+          </svg>
+        </div>
+        Mac ID
+      </div>
+      <div id="account"></div>
+    </header>
+
+    <section>
+      <span class="k">Pro · $4 / month</span>
+      <h1>Unlimited face unlocks on your Mac</h1>
+      <p class="lede">Free includes 30 face unlocks a day, then Touch ID or your password. Pro removes the limit. Sign in with the same account you use in the Mac ID app.</p>
+    </section>
+
+    <div id="pricing" aria-live="polite"></div>
+
+    <div class="actions">
+      <a class="btn primary" href="app.macid.MacID://billing">Return to Mac ID</a>
+      <span id="status" class="status">Loading plans…</span>
+    </div>
+    <p class="note">Mac ID refreshes your plan when you switch back to it. If Pro doesn't show up right away, choose Plan → Refresh Plan in the app. If the button above does nothing, switch to Mac ID yourself.</p>
+  </main>
+
+  <script>
+    (async () => {
+      const status = document.getElementById('status');
+      const setStatus = (text, kind) => { status.textContent = text; status.className = 'status' + (kind ? ' ' + kind : ''); };
+      try {
+        const key = document.querySelector('meta[name="clerk-publishable-key"]').content.trim();
+        if (!/^pk_(test|live)_/.test(key) || key.includes('REPLACE')) throw new Error('Add your Clerk publishable key to the clerk-publishable-key meta tag.');
+        // The publishable key encodes this Clerk instance's Frontend API host.
+        const frontendApi = atob(key.split('_')[2]).replace(/\$$/, '');
+        await new Promise((resolve, reject) => {
+          const s = document.createElement('script');
+          s.src = `https://${frontendApi}/npm/@clerk/clerk-js@6/dist/clerk.browser.js`;
+          s.async = true; s.crossOrigin = 'anonymous';
+          s.setAttribute('data-clerk-publishable-key', key);
+          s.onload = resolve; s.onerror = () => reject(new Error('Could not load Clerk from ' + frontendApi));
+          document.head.appendChild(s);
+        });
+        const clerk = window.Clerk;
+        await clerk.load({
+          appearance: { variables: { colorPrimary: '#ffb35c', colorBackground: '#121620', colorText: '#e4e7ee', fontFamily: 'Instrument Sans, Helvetica, Arial, sans-serif' } },
+        });
+
+        const account = document.getElementById('account');
+        const renderAccount = () => {
+          account.innerHTML = '';
+          if (clerk.isSignedIn) {
+            clerk.mountUserButton(account);
+            setStatus('Signed in as ' + (clerk.user?.primaryEmailAddress?.emailAddress || 'you'), 'ok');
+          } else {
+            const b = document.createElement('button');
+            b.className = 'btn ghost'; b.type = 'button'; b.textContent = 'Sign in';
+            b.addEventListener('click', () => clerk.openSignIn({ forceRedirectUrl: location.href }));
+            account.appendChild(b);
+            setStatus('Sign in to subscribe.');
+          }
+        };
+        renderAccount();
+        clerk.addListener(() => renderAccount());
+
+        // Clerk Billing: plans configured in Dashboard → Billing → Plans (User Plans tab).
+        clerk.mountPricingTable(document.getElementById('pricing'), {
+          newSubscriptionRedirectUrl: location.href.split('#')[0] + '#subscribed',
+        });
+        if (location.hash === '#subscribed') setStatus('You are on Pro. Return to Mac ID to start unlimited unlocks.', 'ok');
+      } catch (err) {
+        setStatus(err.message || String(err), 'err');
+      }
+    })();
+  </script>
+</body>
+</html>
